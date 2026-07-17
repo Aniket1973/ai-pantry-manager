@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getCurrentUserFromRequest } from "@/lib/session";
-import { pantryItemSchema } from "@/lib/validators";
+
+// Force dynamic route - prevents Next.js from collecting page data during build
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function PATCH(request: Request, context: { params: any }) {
+  // Lazy imports to prevent Prisma/Auth initialization during build
+  const prisma = (await import("@/lib/prisma")).default;
+  const { getCurrentUserFromRequest } = await import("@/lib/session");
+  const { pantryItemSchema } = await import("@/lib/validators");
+
   const user = await getCurrentUserFromRequest(request);
   const params = context.params as { id: string };
   if (!user) {
@@ -36,6 +42,10 @@ export async function PATCH(request: Request, context: { params: any }) {
 }
 
 export async function DELETE(request: Request, context: { params: any }) {
+  // Lazy imports to prevent Prisma/Auth initialization during build
+  const prisma = (await import("@/lib/prisma")).default;
+  const { getCurrentUserFromRequest } = await import("@/lib/session");
+
   const user = await getCurrentUserFromRequest(request);
   const params = context.params as { id: string };
   if (!user) {
