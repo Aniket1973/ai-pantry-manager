@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setIsLoading(true);
 
     const response = await fetch("/api/signup", {
       method: "POST",
@@ -19,12 +23,29 @@ export default function SignUpPage() {
     });
 
     if (!response.ok) {
-      const data = await response.json();
-      setError(data?.error || "Sign up failed");
+      let message = "Sign up failed";
+      try {
+        const data = await response.json();
+        if (data?.error) {
+          if (typeof data.error === "string") message = data.error;
+          else if (typeof data.error === "object") {
+            // zod fieldErrors shape
+            const parts: string[] = [];
+            for (const key of Object.keys(data.error)) {
+              const val = (data.error as any)[key];
+              if (Array.isArray(val)) parts.push(`${key}: ${val.join(", ")}`);
+              else if (val) parts.push(String(val));
+            }
+            if (parts.length) message = parts.join("; ");
+          }
+        }
+      } catch (e) {}
+      setError(message);
+      setIsLoading(false);
       return;
     }
-
-    window.location.href = "/signin";
+    setIsLoading(false);
+    router.push("/signin");
   }
 
   return (
@@ -62,13 +83,15 @@ export default function SignUpPage() {
               onChange={(event) => setPassword(event.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-slate-400"
               required
+              disabled={isLoading}
             />
           </label>
           <button
             type="submit"
             className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+            disabled={isLoading}
           >
-            Sign up
+            {isLoading ? "Signing up..." : "Sign up"}
           </button>
         </form>
       </div>
