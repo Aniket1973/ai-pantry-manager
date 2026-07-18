@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getCurrentUserFromRequest } from "@/lib/session";
-import { pantryItemSchema } from "@/lib/validators";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  const { default: prisma } = await import("@/lib/prisma");
+  const { getCurrentUserFromRequest } = await import("@/lib/session");
+
   const user = await getCurrentUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,6 +21,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const { default: prisma } = await import("@/lib/prisma");
+  const { getCurrentUserFromRequest } = await import("@/lib/session");
+  const { pantryItemSchema } = await import("@/lib/validators");
+
   const user = await getCurrentUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

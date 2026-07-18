@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma";
-import { signUpSchema } from "@/lib/validators";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const { default: prisma } = await import("@/lib/prisma");
+  const { signUpSchema } = await import("@/lib/validators");
+
   const data = await request.json();
   const parsed = signUpSchema.safeParse(data);
   if (!parsed.success) {

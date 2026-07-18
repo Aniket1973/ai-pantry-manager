@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { recipePromptSchema } from "@/lib/validators";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
 export async function POST(request: Request) {
+  const { recipePromptSchema } = await import("@/lib/validators");
+
   const body = await request.json();
   const parsed = recipePromptSchema.safeParse(body);
   if (!parsed.success) {
