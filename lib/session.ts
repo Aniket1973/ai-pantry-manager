@@ -1,4 +1,4 @@
-import { getToken } from "@auth/core/jwt";
+import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
 
 export async function getCurrentUserFromRequest(request: Request) {
@@ -7,7 +7,17 @@ export async function getCurrentUserFromRequest(request: Request) {
     throw new Error("NEXTAUTH_SECRET is not defined");
   }
 
-  const token = await getToken({ req: request, secret, salt: secret });
+  const secureCookie = process.env.NEXTAUTH_URL?.startsWith("https://") ?? false;
+  const cookieName = secureCookie
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+  const token = await getToken({
+    req: request,
+    secret,
+    salt: cookieName,
+    cookieName,
+    secureCookie,
+  });
   if (!token?.sub || typeof token.sub !== "string") {
     return null;
   }

@@ -1,10 +1,10 @@
-import { Auth, type AuthConfig } from "@auth/core";
-import Credentials from "@auth/core/providers/credentials";
+import NextAuth, { type NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
-export const authOptions: AuthConfig = {
+const authOptions: NextAuthConfig = {
   providers: [
     Credentials({
       id: "credentials",
@@ -48,23 +48,24 @@ export const authOptions: AuthConfig = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: any }) {
-      return {
-        ...token,
-        ...user,
-      };
+    async jwt({ token, user }) {
+      if (user) {
+        token.name = user.name;
+        token.email = user.email;
+      }
+
+      return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.sub,
-          name: token.name,
-          email: token.email,
-          image: token.picture,
-        },
-      };
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.name = token.name ?? null;
+        session.user.image = token.picture ?? null;
+        if (typeof token.email === "string") {
+          session.user.email = token.email;
+        }
+      }
+
+      return session;
     },
   },
   pages: {
@@ -72,6 +73,9 @@ export const authOptions: AuthConfig = {
   },
 };
 
-export async function authHandler(request: Request) {
-  return Auth(request, authOptions);
-}
+export const {
+  handlers: { GET, POST },
+  auth,
+  signIn,
+  signOut,
+} = NextAuth(authOptions);

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export default function Header() {
@@ -8,9 +9,8 @@ export default function Header() {
 
   useEffect(() => {
     async function checkAuth() {
-      const response = await fetch("/api/auth/session", { method: "GET" });
-      const data = await response.json();
-      setIsAuthenticated(Boolean(data?.user));
+      const session = await getSession();
+      setIsAuthenticated(Boolean(session?.user));
     }
 
     checkAuth();
@@ -29,12 +29,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={async () => {
-                  await fetch("/api/auth", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "signout" }),
-                  });
-                  window.location.reload();
+                  await signOut({ redirectTo: "/" });
                 }}
                 className="rounded-full bg-slate-900 px-4 py-2 text-white hover:bg-slate-700"
               >

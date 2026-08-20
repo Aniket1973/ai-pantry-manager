@@ -1,34 +1,37 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setIsSubmitting(true);
 
-    const response = await fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "signin",
-        providerId: "credentials",
+    try {
+      const result = await signIn("credentials", {
         email,
         password,
-      }),
-    });
+        redirect: false,
+      });
 
-    if (!response.ok) {
-      const data = await response.json();
-      setError(data?.error || "Sign in failed");
-      return;
+      if (!result?.ok) {
+        setError("Invalid email or password");
+        return;
+      }
+
+      window.location.assign("/dashboard");
+    } catch {
+      setError("Unable to sign in. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    window.location.href = "/";
   }
 
   return (
@@ -60,9 +63,10 @@ export default function SignInPage() {
           </label>
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-700"
           >
-            Sign in
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
       </div>
